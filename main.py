@@ -284,12 +284,6 @@ def display_map(image_path, drone_pos_cm):
             pygame.display.update()  # Update the display
 
             # this is very important not to move because the radical change function has variables that get updated after we draw_drone_detect_and_color !!!!!
-            test = (prev_dist_wall * 4) - 21
-            dist_dict = {(0, -1): detect_distance_up, (0, 1): detect_distance_down, (-1, 0): detect_distance_left,
-                         (1, 0): detect_distance_right}  # up down right left
-            test1 = dist_dict[tuple(following_wall_direction)]
-            print("test: = " + str(test))
-            print("test1: = " + str(test1))
             temp = radical_change(prev_dist_wall, following_wall_direction, direction)
             if temp:
                 flag = True # this is so i can move
