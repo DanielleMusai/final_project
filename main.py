@@ -2,8 +2,6 @@ import pygame
 import sys
 import time
 import random
-import math
-from pygame.locals import QUIT, KEYDOWN, K_UP, K_DOWN, K_LEFT, K_RIGHT
 
 from point import Point
 
@@ -17,7 +15,7 @@ DETECTION_RANGE_PX = int(DETECTION_RANGE_CM / PIXELS_PER_CM)
 DRONE_RADIUS_CM = 10
 DRONE_RADIUS_PX = int(DRONE_RADIUS_CM / PIXELS_PER_CM)
 SENSOR_RATE = 10  # 10 times per second
-BATTERY_LIFE_MINUTES = 1
+BATTERY_LIFE_MINUTES = 0.5
 BATTERY_LIFE_SECONDS = BATTERY_LIFE_MINUTES * 60
 DRONE_SPEED_CM_PER_SEC = 100  # 100 # 1 meter per second
 DRONE_SPEED_PX_PER_SEC = int(DRONE_SPEED_CM_PER_SEC / PIXELS_PER_CM)
@@ -44,8 +42,6 @@ this is the main loop that displays the map
 call functions 
 and waits fro movement directions 
 """
-
-
 def display_map(image_path, drone_pos_cm):
     map_image = pygame.image.load(image_path)  # Load the image
     map_width, map_height = map_image.get_size()  # Get the size of the image in pixels
@@ -90,33 +86,28 @@ def display_map(image_path, drone_pos_cm):
             if return_index >= 0:
                 print(f"Current position: {drone_pos_px}")
                 print(f"Target position: {PATH_HISTORY[return_index]}")
-
                 target_pos = PATH_HISTORY[return_index]
-                distance = distance_between(drone_pos_px, target_pos)
 
-                if return_index < len(PATH_HISTORY) - 1:
-                    pygame.draw.line(screen, GREEN, drone_pos_px, PATH_HISTORY[return_index], 2)
-
-                    # Draw all previous segments of the return path
+                # Draw the return path
                 for i in range(return_index, len(PATH_HISTORY) - 1):
                     pygame.draw.line(screen, GREEN, PATH_HISTORY[i], PATH_HISTORY[i + 1], 2)
 
-                pygame.display.update()  # Ensure the display updates after drawing
-
-                if distance > 1:  # Only move if the target is not too close
-                    new_pos = move_towards_target(drone_pos_px, target_pos, map_image)
-                    if new_pos != drone_pos_px:
-                        print(f"Moved to new position: {new_pos}")
-                        drone_pos_px = new_pos
-                    else:
-                        print("Failed to move towards target")
-                        return_index -= 1
+                # Move towards the target
+                new_pos = move_towards_target(drone_pos_px, target_pos, map_image)
+                if new_pos != drone_pos_px:
+                    pygame.draw.line(screen, GREEN, drone_pos_px, new_pos, 2)
+                    print(f"Moved to new position: {new_pos}")
+                    drone_pos_px = new_pos
                 else:
+                    print("Failed to move towards target")
+                    return_index -= 1
+
+                # Check if we've reached the current target
+                if distance_between(drone_pos_px, target_pos) < 2:
                     print(f"Reached target at index {return_index}")
                     return_index -= 1
 
-                if return_index >= 0:
-                    pygame.draw.line(screen, GREEN, drone_pos_px, PATH_HISTORY[return_index], 2)
+                pygame.display.update()
             else:
                 print("Drone has returned to the starting point.")
                 break  # End the simulation when the drone returns home
@@ -269,8 +260,16 @@ def display_map(image_path, drone_pos_cm):
 
         time.sleep(1 / SENSOR_RATE)  # Sleep to simulate the sensor update rate
 
+'''
+Calculate the Euclidean distance between two points.
+'''
+
 def distance_between(pos1, pos2):
     return ((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)**0.5
+
+'''
+Move the drone towards a target position.
+'''
 
 def move_towards_target(current_pos, target_pos, map_image):
     dx = target_pos[0] - current_pos[0]
@@ -280,21 +279,24 @@ def move_towards_target(current_pos, target_pos, map_image):
     if distance < 0.1:  # If very close, just return the target position
         return target_pos
 
-        # Move with the full speed instead of a fraction
+     # Move with the full speed instead of a fraction
     move_distance = min(distance, DRONE_SPEED_PX_PER_SEC / SENSOR_RATE)
+
+    # Calculate the new position
     move_x = current_pos[0] + (dx / distance) * move_distance
     move_y = current_pos[1] + (dy / distance) * move_distance
     new_pos = [move_x, move_y]
 
+    # # Check if the new position is valid
     if validate_and_adjust_position(new_pos, map_image, map_image.get_width(), map_image.get_height()):
         return new_pos
 
     print("Unable to move in any direction")
     return current_pos  # If we can't move at all, return the current position
+
 '''
 if we detect a radical change in the wall direction before changing directions we will use this function to do afue more moves so that we wont bump it to the wall
 '''
-
 
 def one_more_move(pos, map, main_movment):
     dist_dict = {(0, -1): detect_distance_up, (0, 1): detect_distance_down, (-1, 0): detect_distance_left,
@@ -304,11 +306,9 @@ def one_more_move(pos, map, main_movment):
         return location
     return None
 
-
 '''
 this function will detect a radicl change in the distance from the wall we are following
 '''
-
 
 def radical_change(last_wall_dist, wall_direction, movment_direction):
     dist_dict = {(0, -1): detect_distance_up, (0, 1): detect_distance_down, (-1, 0): detect_distance_left,
@@ -320,12 +320,10 @@ def radical_change(last_wall_dist, wall_direction, movment_direction):
         return True
     return False
 
-
 '''
 now we need a function that will take us in a different direction after reaching the nearest wall 
 ideally to the place where we detect more space not less !
 '''
-
 
 def direction_change(old_direction):
     directions = [
@@ -353,11 +351,9 @@ def direction_change(old_direction):
             direction = [0, 1]
     return direction
 
-
 '''
 for the initial movement we will use this function to detect the closest wall to follow
 '''
-
 
 def closest_wall_direction(screen, drone_pos_px):
     directions = [
@@ -385,11 +381,9 @@ def closest_wall_direction(screen, drone_pos_px):
 
     return direction
 
-
 '''
 this code needs to be adjusted to only move the drone and not validate the position 
 '''
-
 
 def move_drone(current_pos_px, map_image, movement_direction):
     map_width, map_height = map_image.get_size()
@@ -410,14 +404,9 @@ def move_drone(current_pos_px, map_image, movement_direction):
             PATH_HISTORY.append(tuple(new_pos_px))  # Record the position
             return new_pos_px
 
-
-
-
-
 '''
 this returns true or false if the new position is good 
 '''
-
 
 def validate_and_adjust_position(drone_pos_px, map_image, map_width, map_height):
     safe_distance_px = int(20 / PIXELS_PER_CM)
@@ -443,12 +432,10 @@ def validate_and_adjust_position(drone_pos_px, map_image, map_width, map_height)
     # this already returns true or false
     return color == WHITE or color == YELLOW
 
-
 """
 Function to detect the map area and color it yellow
 this needs to happen 10 times per second !!
 """
-
 
 def draw_drone_detect_and_color(screen, drone_pos_px, map_image):
     global detect_distance_up, detect_distance_down, detect_distance_left, detect_distance_right
@@ -494,13 +481,10 @@ def draw_drone_detect_and_color(screen, drone_pos_px, map_image):
         elif dx < 0 and dy == 0:
             detect_distance_left = detected_distance
 
-
 """
 Function to draw text on the screen
 and may be deleted and simply moved to the main loop in display_map 
 """
-
-
 
 def draw_text(screen, text, font, color, position):
     text_surface = font.render(text, True, color)
