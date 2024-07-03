@@ -1,6 +1,6 @@
 # FINAL PROJECT-  Drone Navigation Simulation
 
-## authorers
+## Authorers
 Zeev Fischer: 318960242   
 Eden Mor: 316160332   
 Danielle Musai: 206684755 
