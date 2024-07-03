@@ -1,9 +1,9 @@
-# final_project -  Drone Navigation Simulation
+# FINAL PROJECT-  Drone Navigation Simulation
 
 ## authorers
-zeev fischer: 318960242   
-eden mor: 316160332   
-daniel musai: 206684755 
+Zeev Fischer: 318960242   
+Eden Mor: 316160332   
+Danielle Musai: 206684755 
 
 ## Project Overview -Extension of assignment number 1
 This project simulates a drone navigating through a 2D environment, avoiding obstacles and returning to its starting point. The simulation uses Pygame for visualization and implements basic collision detection and pathfinding algorithms.
