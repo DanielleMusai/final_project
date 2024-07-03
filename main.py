@@ -104,7 +104,12 @@ def display_map(image_path, drone_pos_cm):
             return_index = len(PATH_HISTORY) - 1
 
         if return_journey:
+            flag = False
+            flag2 = False
+            false_corner = False
+
             if return_index >= 0:
+                prev_drone_pos = drone_pos_px
                 drone_pos_px = PATH_HISTORY[return_index]
                 return_index = return_index - 1
 
@@ -120,11 +125,13 @@ def display_map(image_path, drone_pos_cm):
                 # we first start with potential movements for the wall and main direction to see where we can go
                 potential_position_wall = move_drone(drone_pos_px, map_image, following_wall_direction)
                 potential_position_main_movment = move_drone(drone_pos_px, map_image, main_movment_direction)
+                # print("flag if")
 
                 # this is for flag 2 explanation is further down
                 if count2 == 3:
                     flag2 = False
                     count2 = 0
+                    # print("flag2 if")
 
                 # if flag2 is on befor going back to the main algorithem we want to make afue more moves in the main movment direction
                 if (potential_position_wall is not None) and (potential_position_main_movment is not None) and flag2:
@@ -132,6 +139,7 @@ def display_map(image_path, drone_pos_cm):
                     drone_pos_px = potential_position_main_movment
                     direction = main_movment_direction
                     count2 = count2 + 1
+                    # print("if 1")
 
                 # this means i changed direction to a place i cant go to
                 elif flag2 and potential_position_main_movment is None:
@@ -140,36 +148,40 @@ def display_map(image_path, drone_pos_cm):
                     main_movment_direction = [following_wall_direction[0] * -1, following_wall_direction[1] * -1]
                     following_wall_direction = save
                     flag2 = False
+                    # print("if 2")
                     continue
 
                 #################################################
                 # for the most part this is the main algorithm of the movement when all is good !!!
 
                 # if i can go to the wall go
-                elif potential_position_wall is not None:
+                elif potential_position_wall is not None and false_corner == False:
                     prev_drone_pos = drone_pos_px
                     drone_pos_px = potential_position_wall
                     direction = following_wall_direction
+                    # print("if 3")
 
                 # if not the wall try new movment direction
-                elif (potential_position_wall is None) and (potential_position_main_movment is not None):
+                elif (potential_position_wall is None) and (potential_position_main_movment is not None) and false_corner == False:
                     prev_drone_pos = drone_pos_px
                     drone_pos_px = potential_position_main_movment
                     direction = main_movment_direction
+                    # print("if 4")
 
                 # if i cant got ither way and its the start
-                elif (potential_position_wall is None) and (potential_position_main_movment is None) and (following_wall_direction == main_movment_direction):
+                elif (potential_position_wall is None) and (potential_position_main_movment is None) and (following_wall_direction == main_movment_direction) and false_corner == False:
                     main_movment_direction = direction_change(main_movment_direction)
+                    # print("if 5")
                     continue
 
                 # this hopefully is when i am in a corner
-                elif (potential_position_wall is None) and (potential_position_main_movment is None) and (dist_dict[tuple(following_wall_direction)] < 40) and (dist_dict[tuple(main_movment_direction)] < 40):
+                elif (potential_position_wall is None) and (potential_position_main_movment is None) and (dist_dict[tuple(following_wall_direction)] < 40) and (dist_dict[tuple(main_movment_direction)] < 40) and false_corner == False:
                     # print("corner")
                     following_wall_direction = main_movment_direction
                     continue
 
                 # this is when i detected a new space but i am to close to the wall so i cant move to that direction yet
-                elif (potential_position_wall is None) and (potential_position_main_movment is None) and ((dist_dict[tuple(following_wall_direction)] > 20) or (dist_dict[tuple(main_movment_direction)] > 20)):
+                elif (potential_position_wall is None) and (potential_position_main_movment is None) and ((dist_dict[tuple(following_wall_direction)] > 20) or (dist_dict[tuple(main_movment_direction)] > 20)) and false_corner == False:
                     false_corner = True
                     # print("false corner")
 
@@ -183,6 +195,7 @@ def display_map(image_path, drone_pos_cm):
                 if count == 2:
                     count = 0
                     flag = False
+                    # print("if 6")
 
                     # print("changing direction")
 
@@ -196,10 +209,12 @@ def display_map(image_path, drone_pos_cm):
                         drone_pos_px = one_more_move(drone_pos_px,map_image,main_movment_direction)
                         direction = main_movment_direction
                         count = count+1
+                        # print("if 7")
                     else:
                         opesit_wall = [following_wall_direction[0]*-1,following_wall_direction[1]*-1]
                         potential = move_drone(drone_pos_px,map_image,opesit_wall)
                         if potential is None:
+                            # print("if 8")
                             flag = False
                             flag2 =False
                             following_wall_direction = opesit_wall
@@ -209,6 +224,7 @@ def display_map(image_path, drone_pos_cm):
                             prev_drone_pos = drone_pos_px
                             drone_pos_px = potential
                             direction = opesit_wall
+                            # print("if 9")
 
             # there are instances of false corners where we detect smace but cant move yet due to the size of the drone this part will correct the movemaet acordinly.
             if false_corner:
@@ -218,16 +234,19 @@ def display_map(image_path, drone_pos_cm):
                     prev_drone_pos = drone_pos_px
                     drone_pos_px = potential_opesit_wall
                     direction = opesit_wall_direction
+                    # print("if 10")
 
                 if potential_position_main_movment is not None:
                     prev_drone_pos = drone_pos_px
                     drone_pos_px = potential_position_main_movment
                     direction = main_movment_direction
                     false_corner = False
+                    # print("if 11")
 
                 if potential_opesit_wall is None and potential_position_main_movment is None:
                     opesit_main = [main_movment_direction[0] * -1, main_movment_direction[1] * -1]
                     potential_opesit_main = move_drone(drone_pos_px, map_image, opesit_main)
+                    # print("if 12")
                     if potential_opesit_main is not None:
                         prev_drone_pos = drone_pos_px
                         drone_pos_px = potential_opesit_main
@@ -236,13 +255,16 @@ def display_map(image_path, drone_pos_cm):
                         following_wall_direction =  main_movment_direction
                         main_movment_direction = opesit_wall_direction
                         false_corner = False
+                        # print("if 13")
 
             # to prevent unnecessary movements towards the wall this basically says if you are close enough and there is nothing stoping you go in the main movement direction not the wall
             if dist_dict[tuple(main_movment_direction)] == float('inf') and dist_dict[tuple(following_wall_direction)] < 30 and flag == False and false_corner == False and potential_position_main_movment is not None and direction != main_movment_direction:
+                # print("if 14")
                 if drone_pos_px != potential_position_main_movment:
                     prev_drone_pos = drone_pos_px
                     drone_pos_px = potential_position_main_movment
                     direction = main_movment_direction
+                    # print("if 15")
 
             # I think this is pretty self-explanatory
             if drone_pos_px == prev_drone_pos:
@@ -254,16 +276,24 @@ def display_map(image_path, drone_pos_cm):
 
             prev_dist_wall = dist_dict[tuple(following_wall_direction)]
             screen.blit(map_image, (0, 0))  # Draw the image onto the screen
+            # print("prev_drone_pos: = " + str(prev_drone_pos[0]) + " , " + str(prev_drone_pos[1]))
+            # print("drone_pos_px: = " + str(drone_pos_px[0]) + " , " + str(drone_pos_px[1]))
             draw_drone_detect_and_color(screen, drone_pos_px,map_image,direction)  # Draw the drone and its detection range on the map
             PATH_HISTORY.append(drone_pos_px)  # Record the position
             draw_text(screen, f"Time Remaining: {minutes_remaining:02d}:{seconds_remaining:02d}", font, TEXT_COLOR,(10, 10))  # Draw the time remaining
             pygame.display.update()  # Update the display
 
             # this is very important not to move because the radical change function has variables that get updated after we draw_drone_detect_and_color !!!!!
+            test = (prev_dist_wall * 4) - 21
+            dist_dict = {(0, -1): detect_distance_up, (0, 1): detect_distance_down, (-1, 0): detect_distance_left,
+                         (1, 0): detect_distance_right}  # up down right left
+            test1 = dist_dict[tuple(following_wall_direction)]
+            print("test: = " + str(test))
+            print("test1: = " + str(test1))
             temp = radical_change(prev_dist_wall, following_wall_direction, direction)
             if temp:
                 flag = True # this is so i can move
-                flag2 = True # this is for the main movment so i dont go back
+                flag2 = True # this is for the main movement so i dont go back from where i came
                 # print("flag True")
 
         """
@@ -285,7 +315,7 @@ this function will detect a radicl change in the distance from the wall we are f
 '''
 def radical_change(last_wall_dist, wall_direction, movment_direction):
     dist_dict = {(0, -1): detect_distance_up, (0, 1): detect_distance_down, (-1, 0): detect_distance_left,(1, 0): detect_distance_right}  # up down right left
-    if (((last_wall_dist * 4) - 15 < dist_dict[tuple(wall_direction)]) or (dist_dict[tuple(wall_direction)] >= 110 and last_wall_dist <= 70) )and wall_direction[0] != movment_direction[0]:  # we lost the wall direction went != wall direction
+    if (((last_wall_dist * 3) - 10 < dist_dict[tuple(wall_direction)]) or (dist_dict[tuple(wall_direction)] >= 110 and last_wall_dist <= 70)) and wall_direction[0] != movment_direction[0]:  # we lost the wall direction went != wall direction
         # following_wall_direction = [main_movment_direction[0] * -1, main_movment_direction[1] * -1]
         return True
     return False
@@ -411,8 +441,12 @@ def validate_and_adjust_position(drone_pos_px, map_image, map_width, map_height)
 """
 Function to detect the map area and color it yellow
 this needs to happen 10 times per second !!
+
+here we can do a test before coloring yellow if its already yellow we where here !!!! 
 """
 def draw_drone_detect_and_color(screen, drone_pos_px, map_image,movment_direction):
+    was_i_here = False # this will be returned True if the detected era was yellow before
+
     global detect_distance_up, detect_distance_down, detect_distance_left, detect_distance_right
     center_x, center_y = int(drone_pos_px[0]), int(drone_pos_px[1])
     pygame.draw.circle(screen, RED, (center_x, center_y), DRONE_RADIUS_PX)
@@ -436,17 +470,22 @@ def draw_drone_detect_and_color(screen, drone_pos_px, map_image,movment_directio
         for i in range(1, DETECTION_RANGE_PX + 1):
             x = center_x + dx * i // DETECTION_RANGE_PX
             y = center_y + dy * i // DETECTION_RANGE_PX
+
             if 0 <= x < screen.get_width() and 0 <= y < screen.get_height():
                 color = screen.get_at((x, y))
                 if i == DETECTION_RANGE_PX and color == WHITE:
                     inf_count += 1
                     inf_directions.append((dx, dy))
-                if color == WHITE:
+                if color == YELLOW:
+                    was_i_here = True
+                elif color == WHITE:
+                    was_i_here = False
                     screen.set_at((x, y), YELLOW)
                     map_image.set_at((x, y), YELLOW)
                 elif color == BLACK:
                     detected_distance = i
                     break
+
         if dx == 0 and dy < 0:
             detect_distance_up = detected_distance
         elif dx == 0 and dy > 0:
@@ -458,6 +497,8 @@ def draw_drone_detect_and_color(screen, drone_pos_px, map_image,movment_directio
 
     if inf_count >= 2:
         Point_displacement(screen, center_x, center_y, inf_directions,movment_direction)
+
+    return was_i_here
 
 '''
 this is a feature that is not yet used this potentially puts a point on the map where the drone detected more than 2 optional directions and didnt explore one of them yet
@@ -495,8 +536,6 @@ def Point_displacement(screen, center_x, center_y, inf_directions,movment_direct
         print("New Point:", new_point)
     # pygame.draw.circle(screen, GREEN, (center_x, center_y), DRONE_RADIUS_PX)
 
-
-
 """
 Function to draw text on the screen
 and may be deleted and simply moved to the main loop in display_map 
@@ -504,6 +543,19 @@ and may be deleted and simply moved to the main loop in display_map
 def draw_text(screen, text, font, color, position):
     text_surface = font.render(text, True, color)
     screen.blit(text_surface, position)
+
+'''
+this function will get a 2 points and will calculate if point 2 is close to point 1 in a given era
+ -----------
+|         2 |      
+|     1     |
+|           |
+ -----------
+ this may look big here but we will test a very small margin 
+ 
+ for every point in our saved path we will check if it is in the locations range if there is only one then that is easy but if there are more that means that there may be a better path to that location  
+'''
+# def point_2_in_1(screen,location,point)
 
 # Main function
 if __name__ == "__main__":
