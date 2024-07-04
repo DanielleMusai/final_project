@@ -24,6 +24,8 @@ DRONE_SPEED_CM_PER_SEC = 100  # 100 # 1 meter per second
 DRONE_SPEED_PX_PER_SEC = int(DRONE_SPEED_CM_PER_SEC / PIXELS_PER_CM)
 PATH_HISTORY = []
 POINT_HISTORY = []
+ENDLESS_LOOP = []
+LATS_FIVE_MOVES = []
 
 # Colors
 WHITE = (255, 255, 255)
@@ -282,6 +284,12 @@ def display_map(image_path, drone_pos_cm):
             PATH_HISTORY.append(drone_pos_px)  # Record the position
             draw_text(screen, f"Time Remaining: {minutes_remaining:02d}:{seconds_remaining:02d}", font, TEXT_COLOR,(10, 10))  # Draw the time remaining
             pygame.display.update()  # Update the display
+
+            if endless_loop(drone_pos_px):
+                save = following_wall_direction
+                following_wall_direction = main_movment_direction
+                main_movment_direction = save
+                ENDLESS_LOOP.clear()
 
             # this is very important not to move because the radical change function has variables that get updated after we draw_drone_detect_and_color !!!!!
             temp = radical_change(prev_dist_wall, following_wall_direction, direction)
@@ -550,11 +558,29 @@ this function will get a 2 points and will calculate if point 2 is close to poin
  for every point in our saved path we will check if it is in the locations range if there is only one then that is easy but if there are more that means that there may be a better path to that location  
 '''
 # def point_2_in_1(screen,location,point)
+'''
+this will find an endless loop that it within an x amount of moves 
+'''
+def endless_loop(new_pos):
+    for i in range(len(ENDLESS_LOOP)):
+        if new_pos[0] == ENDLESS_LOOP[i][0] and new_pos[1] == ENDLESS_LOOP[i][1]:
+            if len(ENDLESS_LOOP) - i > 5:
+                return True
+
+    if len(ENDLESS_LOOP) == 50:
+        for j in range(len(ENDLESS_LOOP)-1):
+            ENDLESS_LOOP[j] = ENDLESS_LOOP[j+1]
+        ENDLESS_LOOP[len(ENDLESS_LOOP)-1] = new_pos
+        return None
+
+    # if we did not find the point we add it and return None
+    ENDLESS_LOOP.append(new_pos)
+    return None
 
 # Main function
 if __name__ == "__main__":
     # Path to the image file
-    image_path = "C:\\Users\\dovy4\\Desktop\\אוניברסיטה גיבוי 3.3.2022\\שנה ד סמסטר ב\\רובוטים אוטונומיים\\מטלה 1\\EX1\\Maps\\p11.png" # change as needed !!!!
+    image_path = "C:\\Users\\dovy4\\Desktop\\אוניברסיטה גיבוי 3.3.2022\\שנה ד סמסטר ב\\רובוטים אוטונומיים\\מטלה 1\\EX1\\Maps\\p14.png" # change as needed !!!!
 
     # Load the map image to get its dimensions
     map_image = pygame.image.load(image_path)
