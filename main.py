@@ -1,3 +1,5 @@
+import math
+
 import pygame
 import sys
 import time
@@ -263,7 +265,7 @@ def display_map(image_path, drone_pos_cm):
             if dist_dict[tuple(main_movment_direction)] == float('inf') and dist_dict[tuple(following_wall_direction)] < 30 and flag == False and false_corner == False and potential_position_main_movment is not None and direction != main_movment_direction:
                 # print("if 14")
                 if drone_pos_px != potential_position_main_movment:
-                    prev_drone_pos = drone_pos_px
+                    # prev_drone_pos = drone_pos_px
                     drone_pos_px = potential_position_main_movment
                     direction = main_movment_direction
                     # print("if 15")
@@ -280,7 +282,11 @@ def display_map(image_path, drone_pos_cm):
             screen.blit(map_image, (0, 0))  # Draw the image onto the screen
             # print("prev_drone_pos: = " + str(prev_drone_pos[0]) + " , " + str(prev_drone_pos[1]))
             # print("drone_pos_px: = " + str(drone_pos_px[0]) + " , " + str(drone_pos_px[1]))
-            draw_drone_detect_and_color(screen, drone_pos_px,map_image,direction)  # Draw the drone and its detection range on the map
+            was_here = draw_drone_detect_and_color(screen,prev_drone_pos ,drone_pos_px,map_image,direction)  # Draw the drone and its detection range on the map
+            pygame.display.update()
+            fill_in_gap(screen,prev_drone_pos ,drone_pos_px,map_image)
+            # if(was_here):
+            #     print("yes")
             PATH_HISTORY.append(drone_pos_px)  # Record the position
             draw_text(screen, f"Time Remaining: {minutes_remaining:02d}:{seconds_remaining:02d}", font, TEXT_COLOR,(10, 10))  # Draw the time remaining
             pygame.display.update()  # Update the display
@@ -446,10 +452,18 @@ this needs to happen 10 times per second !!
 
 here we can do a test before coloring yellow if its already yellow we where here !!!! 
 """
-def draw_drone_detect_and_color(screen, drone_pos_px, map_image,movment_direction):
-    was_i_here = False # this will be returned True if the detected era was yellow before
+def draw_drone_detect_and_color(screen,prev_pos, drone_pos_px, map_image,movment_direction):
+    was_i_here = True # this will be returned True if the detected era was yellow before
 
     global detect_distance_up, detect_distance_down, detect_distance_left, detect_distance_right
+
+    # pygame.draw.circle(screen, GREEN, (int(prev_pos[0]), int(prev_pos[1])), DRONE_RADIUS_PX)
+    for x in range(int(prev_pos[0]) - DRONE_RADIUS_PX, int(prev_pos[0]) + DRONE_RADIUS_PX):
+        for y in range(int(prev_pos[1]) - DRONE_RADIUS_PX, int(prev_pos[1]) + DRONE_RADIUS_PX):
+            if math.sqrt((x - int(prev_pos[0])) ** 2 + (y - int(prev_pos[1])) ** 2) <= DRONE_RADIUS_PX:
+                screen.set_at((x, y), YELLOW)
+                map_image.set_at((x,y),YELLOW)
+
     center_x, center_y = int(drone_pos_px[0]), int(drone_pos_px[1])
     pygame.draw.circle(screen, RED, (center_x, center_y), DRONE_RADIUS_PX)
     # Draw the points from POINT_HISTORY
@@ -478,9 +492,10 @@ def draw_drone_detect_and_color(screen, drone_pos_px, map_image,movment_directio
                 if i == DETECTION_RANGE_PX and color == WHITE:
                     inf_count += 1
                     inf_directions.append((dx, dy))
-                if color == YELLOW:
-                    was_i_here = True
-                elif color == WHITE:
+                # if color == YELLOW:
+                #     was_i_here = True
+                # elif color == WHITE:
+                if color == WHITE:
                     was_i_here = False
                     screen.set_at((x, y), YELLOW)
                     map_image.set_at((x, y), YELLOW)
@@ -501,6 +516,57 @@ def draw_drone_detect_and_color(screen, drone_pos_px, map_image,movment_directio
         Point_displacement(screen, center_x, center_y, inf_directions,movment_direction)
 
     return was_i_here
+
+def fill_in_gap(screen,prev_pos, drone_pos_px, map_image):
+    directions = [
+        (0, -DETECTION_RANGE_PX),  # Forward (up)
+        (0, DETECTION_RANGE_PX),  # Backward (down)
+        (DETECTION_RANGE_PX, 0),  # Right
+        (-DETECTION_RANGE_PX, 0)  # Left
+    ]
+    flag_x = False
+    flag_y = False
+    plus_flag = False
+
+    if drone_pos_px[0] == prev_pos[0]: # we moved on the y axis
+        pixel_dif = (drone_pos_px[1] - prev_pos[1])
+        flag_y = True
+    else: # we moved on the x axis
+        pixel_dif = (drone_pos_px[0] - prev_pos[0])
+        flag_x = True
+
+    if pixel_dif > 0:
+        plus_flag = True
+
+
+    temp = abs(pixel_dif)
+    add_x = 0
+    add_y = 0
+    while (temp != 0):
+        # time.sleep(10 / SENSOR_RATE)
+        # print("test")
+        if flag_x:
+            add_x = add_x + 1
+        if flag_y:
+            add_y = add_y + 1
+
+        if plus_flag:
+            center_x, center_y = int(prev_pos[0]) + add_x, int(prev_pos[1]) + add_y
+        else:
+            center_x, center_y = int(prev_pos[0]) - add_x, int(prev_pos[1]) - add_y
+        for dx, dy in directions:
+            for i in range(1, DETECTION_RANGE_PX + 1):
+                x = center_x + dx * i // DETECTION_RANGE_PX
+                y = center_y + dy * i // DETECTION_RANGE_PX
+
+                if 0 <= x < screen.get_width() and 0 <= y < screen.get_height():
+                    color = screen.get_at((x, y))
+                    if color == WHITE:
+                        screen.set_at((x, y), YELLOW)
+                        map_image.set_at((x, y), YELLOW)
+                    elif color == BLACK:
+                        break
+        temp = temp -1
 
 '''
 this is a feature that is not yet used this potentially puts a point on the map where the drone detected more than 2 optional directions and didnt explore one of them yet
@@ -558,6 +624,7 @@ this function will get a 2 points and will calculate if point 2 is close to poin
  for every point in our saved path we will check if it is in the locations range if there is only one then that is easy but if there are more that means that there may be a better path to that location  
 '''
 # def point_2_in_1(screen,location,point)
+
 '''
 this will find an endless loop that it within an x amount of moves 
 '''
@@ -580,7 +647,8 @@ def endless_loop(new_pos):
 # Main function
 if __name__ == "__main__":
     # Path to the image file
-    image_path = "C:\\Users\\dovy4\\Desktop\\אוניברסיטה גיבוי 3.3.2022\\שנה ד סמסטר ב\\רובוטים אוטונומיים\\מטלה 1\\EX1\\Maps\\p14.png" # change as needed !!!!
+    # image_path = "C:\\Users\\dovy4\\Desktop\\אוניברסיטה גיבוי 3.3.2022\\שנה ד סמסטר ב\\רובוטים אוטונומיים\\מטלה 1\\EX1\\Maps\\p1111.png" # change as needed !!!!
+    image_path = "C:\\Users\\dovy4\\PycharmProjects\\robots1\\Maps\\p1111.png"
 
     # Load the map image to get its dimensions
     map_image = pygame.image.load(image_path)
