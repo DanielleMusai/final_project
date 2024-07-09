@@ -46,7 +46,6 @@ detect_distance_left = float('inf')
 
 """
 TO DO
-
 """
 
 '''
@@ -55,19 +54,16 @@ all functions for finding the shortest path !!
 def manhattan_distance(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-
 def get_neighbors(pos, map_image):
     neighbors = []
     # updat this so that the distance from the neighbors will be correct and that way we will move in the right speed !!1
     for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
-        # new_pos = (pos[0] + dx, pos[1] + dy)
         new_pos = move_drone(pos, map_image ,[dx,dy])
         if new_pos is not None and (0 <= new_pos[0] < map_image.get_width() and 0 <= new_pos[1] < map_image.get_height()):
             new_pos = (int(new_pos[0]),int(new_pos[1]))
             if map_image.get_at(new_pos) == YELLOW:
                 neighbors.append(new_pos)
     return neighbors
-
 
 def astar(start, goal, map_image):
     open_set = []
