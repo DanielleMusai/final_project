@@ -7,6 +7,10 @@ Danielle Musai: 206684755
 
 ## Project Overview -Extension of assignment number 1
 This project simulates a drone navigating through a 2D environment, avoiding obstacles and returning to its starting point. The simulation uses Pygame for visualization and implements basic collision detection and pathfinding algorithms.
+There are 3 parts to the mapping:
+1. The mapping from the first assignment.   
+2. When we return to the start, it can be by accident or if the battery is less than 50%, we recall the drone back.   
+3. We simulate a second drone that learns from the first mapping. Now we navigate to points we placed along the map that indicate places that are yet to be mapped. When there are no more points, we end the program.   
 
 ## Features
 - 2D drone movement in a pixel-based environment
