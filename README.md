@@ -41,13 +41,6 @@ This project simulates a drone navigating through a 2D environment, avoiding obs
 - Battery life is simulated with a countdown timer.
 - The simulation ends when the battery is depleted and the drone returns home.
 
-## Key Functions
-
-- `distance_between(pos1, pos2)`: Calculates Euclidean distance between two points.
-- `move_towards_target(current_pos, target_pos, map_image)`: Moves the drone towards a target position.
-- `validate_and_adjust_position(drone_pos_px, map_image, map_width, map_height)`: Checks if a position is valid for the drone.
-
-
 ## How To Run
 **Noat: Basic understanding of running code is required. There are no special downloads needed; however, keep in mind that some workspaces may differ from others.**
 1. for this project we used PyCharm you are encouraged to do the same.
