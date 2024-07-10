@@ -49,5 +49,5 @@ There are 3 parts to the mapping:
 **Noat: Basic understanding of running code is required. There are no special downloads needed; however, keep in mind that some workspaces may differ from others.**
 1. for this project we used PyCharm you are encouraged to do the same.
 2. Open a workspace that can run Python code.
-3. Download the repository and insert the main.py file and the maps directory into your Python workspace.
-4. In the main.py file, in the function main, there is a variable called "image_path" that you need to update to the correct path to the map in your system. This should be the path to the Maps directory included in this repository.
+3. Download the repository and insert all the files and the maps directory into your Python workspace.
+4. In the FinalCode.py file, in the function main, there is a variable called "image_path" that you need to update to the correct path to the map in your system. This should be the path to the Maps directory included in this repository.
